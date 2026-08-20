@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verkeersschool de Palm — Concept C2: Onderweg</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Karla:wght@400;600;700&family=Overpass+Mono:wght@600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<style>
+:root{
+  --sky:#F2E9D8; --road:#22201C; --moss:#4B5A3D; --ochre:#D9922B; --brick:#B25438; --cream:#FBF6EA;
+  --bounce:cubic-bezier(.34,1.66,.52,1); --smooth:cubic-bezier(.22,.68,.36,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--road);}
+body{background:var(--sky); color:var(--road); font-family:'Karla',sans-serif; font-size:17px; line-height:1.6; overflow-x:hidden;}
+body.locked{overflow:hidden; height:100vh;}
+h1,h2,h3{font-family:'Fraunces',serif; font-weight:600; letter-spacing:-.01em;}
+.eyebrow{font-family:'Overpass Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--moss);}
+.concept-tag{position:fixed; top:74px; right:16px; z-index:55; background:var(--road); color:var(--cream); font-family:'Overpass Mono',monospace; font-size:11px; letter-spacing:.08em; padding:8px 14px; border-radius:999px; text-transform:uppercase;}
+
+@media(hover:hover){
+  body,a,button{cursor:none;}
+  .cur{position:fixed; top:0; left:0; z-index:150; pointer-events:none; width:48px; height:48px; margin:-24px 0 0 -24px;}
+  .cur i{position:absolute; background:var(--road); opacity:.8; transition:all .4s var(--bounce);}
+  .cur i:nth-child(1){left:50%;top:0;width:1.5px;height:13px;transform:translateX(-50%);}
+  .cur i:nth-child(2){left:50%;bottom:0;width:1.5px;height:13px;transform:translateX(-50%);}
+  .cur i:nth-child(3){top:50%;left:0;height:1.5px;width:13px;transform:translateY(-50%);}
+  .cur i:nth-child(4){top:50%;right:0;height:1.5px;width:13px;transform:translateY(-50%);}
+  .cur b{position:absolute; left:50%; top:50%; width:5px; height:5px; margin:-2.5px 0 0 -2.5px; border-radius:50%; background:var(--brick); box-shadow:0 0 12px var(--brick); transition:all .4s var(--bounce);}
+  .cur.on i{background:var(--brick); opacity:1;}
+  .cur.on i:nth-child(1),.cur.on i:nth-child(2){height:7px;}
+  .cur.on i:nth-child(3),.cur.on i:nth-child(4){width:7px;}
+  .cur.on b{width:38px; height:38px; margin:-19px 0 0 -19px; opacity:.14; box-shadow:none;}
+}
+
+/* preloader */
+#pre{position:fixed; inset:0; z-index:200; background:var(--road); display:flex; flex-direction:column; justify-content:flex-end; padding:48px 6vw; transition:transform .85s var(--bounce);}
+#pre .row{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px;}
+#pre .ct{font-family:'Fraunces'; font-style:italic; font-weight:600; font-size:74px; color:var(--cream); line-height:1;}
+#pre .lbl{font-family:'Overpass Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ochre);}
+#pre .track{height:3px; background:rgba(251,246,234,.15); border-radius:3px; overflow:hidden;}
+#pre .bar{height:100%; width:0%; background:var(--brick);}
+#pre.go{transform:translateY(-100%);}
+
+section{position:relative; z-index:2; padding:140px 6vw;}
+
+nav{position:fixed; top:0; left:0; right:0; z-index:60; display:flex; justify-content:space-between; align-items:center; padding:22px 6vw; background:transparent; backdrop-filter:none; transition:background .3s var(--smooth), backdrop-filter .3s var(--smooth);}
+nav.scrolled{background:rgba(242,233,216,.82); backdrop-filter:blur(10px);}
+nav .word{font-family:'Fraunces'; font-size:20px;}
+nav .cta-mini{position:relative; overflow:hidden; font-family:'Overpass Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.06em; background:var(--road); color:var(--cream); padding:10px 18px; border-radius:999px; transition:transform .3s var(--bounce);}
+nav .cta-mini:hover{transform:scale(1.08) rotate(-2deg);}
+
+.hero{min-height:100vh; display:flex; flex-direction:column; justify-content:center; position:relative; overflow:hidden;}
+.hero .marquee{position:absolute; top:96px; left:0; white-space:nowrap; font-family:'Overpass Mono',monospace; font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:var(--moss); opacity:.55;}
+.hero .marquee span{display:inline-block; padding-right:40px; animation:scrollx 18s linear infinite;}
+@keyframes scrollx{from{transform:translateX(0);} to{transform:translateX(-50%);}}
+.hh{overflow:hidden;}
+.hh .ln{overflow:hidden; display:block;}
+.hh .ln i{display:block; font-style:normal; transform:translateY(120%) rotate(2deg); will-change:transform;}
+.hero h1{font-size:clamp(52px,8vw,120px); line-height:.94; margin:30px 0 26px;}
+.hero h1 .accent{color:var(--brick); display:inline-block;}
+.hero p.lede{max-width:44ch; font-size:19px; color:#40402f; margin-bottom:38px; opacity:0; transition:opacity .8s var(--smooth) .6s;}
+.hero.ready p.lede{opacity:1;}
+.btn{position:relative; overflow:hidden; display:inline-flex; align-items:center; gap:10px; background:var(--brick); color:var(--cream); font-family:'Karla'; font-weight:700; padding:17px 30px; border-radius:999px; font-size:15px; transition:transform .35s var(--bounce), box-shadow .35s var(--bounce);}
+.btn:hover{transform:translateY(-4px) rotate(-2deg) scale(1.05); box-shadow:0 16px 30px rgba(178,84,56,.35);}
+.btn.ghost{background:transparent; border:2px solid var(--road); color:var(--road);}
+
+.road-scene{position:relative; height:34vh; min-height:220px; margin-top:70px; border-radius:24px; overflow:hidden; background:linear-gradient(180deg,#E4D8BC,var(--sky));}
+.road-scene .strip{position:absolute; bottom:22%; left:0; right:0; height:6px; background:repeating-linear-gradient(90deg,var(--road) 0 30px,transparent 30px 56px);}
+.road-scene .car{position:absolute; bottom:24%; left:-30%; width:180px;}
+.road-scene .car svg{width:100%; filter:drop-shadow(0 12px 16px rgba(0,0,0,.28));}
+.road-scene .note{position:absolute; top:14px; left:18px; background:rgba(34,32,28,.85); color:var(--cream); font-family:'Overpass Mono',monospace; font-size:10px; letter-spacing:.06em; padding:7px 11px; border-radius:8px;}
+
+/* ---- Matter.js physics playground: draggable route chips ---- */
+.physics-section .section-head{margin-bottom:36px;}
+.physics-section h2{font-size:clamp(32px,4.4vw,52px);}
+.physics-hint{font-family:'Overpass Mono',monospace; font-size:12px; color:var(--moss); margin-top:6px;}
+#physicsBox{position:relative; width:100%; height:60vh; min-height:420px; border-radius:28px; overflow:hidden; background:var(--cream); box-shadow:inset 0 0 0 1px rgba(34,32,28,.08);}
+
+/* ---- GSAP pinned horizontal (real ScrollTrigger pin) ---- */
+.pin-wrap{height:320vh; position:relative;}
+.pin-inner{position:sticky; top:0; height:100vh; display:flex; flex-direction:column; justify-content:center; overflow:hidden;}
+.pin-track{display:flex; gap:40px; will-change:transform;}
+.pin-card{flex:0 0 auto; width:min(70vw,520px); background:var(--cream); border-radius:28px; padding:44px 38px; box-shadow:0 24px 50px rgba(34,32,28,.15); position:relative; overflow:hidden;}
+.pin-card::before{content:""; position:absolute; inset:-40%; background:conic-gradient(from var(--a,0deg), transparent 0 78%, rgba(217,146,43,.55) 88%, transparent 96%); opacity:0; transition:opacity .3s;}
+.pin-card:hover::before{opacity:1;}
+.pin-card .num{font-family:'Fraunces'; font-style:italic; font-size:56px; color:var(--ochre); margin-bottom:14px; position:relative; z-index:1;}
+.pin-card h3{font-size:30px; margin-bottom:12px; position:relative; z-index:1;}
+.pin-card p{color:#4a4735; font-size:16px; position:relative; z-index:1;}
+.pin-progress{position:absolute; bottom:60px; left:6vw; right:6vw; height:3px; background:rgba(34,32,28,.14); border-radius:99px;}
+.pin-progress .fill{height:100%; width:0%; background:var(--brick); border-radius:99px;}
+.pin-label{position:absolute; top:40px; left:6vw; font-family:'Overpass Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--moss);}
+
+.price-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:26px;}
+.price-card{position:relative; background:var(--cream); border-radius:26px; padding:2px; overflow:hidden; opacity:0; transform:translateY(40px) scale(.94); transition:opacity .6s var(--bounce), transform .6s var(--bounce);}
+.price-card::before{content:""; position:absolute; inset:-40%; background:conic-gradient(from var(--a,0deg), transparent 0 78%, rgba(217,146,43,.6) 88%, transparent 96%); opacity:0; transition:opacity .3s;}
+.price-card:hover::before{opacity:1;}
+.price-card.in{opacity:1; transform:translateY(0) scale(1);}
+.price-card:nth-child(2){transition-delay:.12s;}
+.price-card:nth-child(3){transition-delay:.24s;}
+.price-card:hover{transform:translateY(-8px) rotate(-1.5deg);}
+.price-inner{position:relative; z-index:1; background:var(--cream); border-radius:24px; padding:34px 28px;}
+.price-card .tag{font-family:'Overpass Mono',monospace; font-size:11px; text-transform:uppercase; color:var(--moss); letter-spacing:.08em;}
+.price-card h3{font-size:28px; margin:10px 0 4px;}
+.price-card .amount{font-family:'Fraunces'; font-style:italic; font-size:38px; color:var(--brick); margin-bottom:16px;}
+.price-card ul{list-style:none; font-size:14.5px; color:#4a4735; display:flex; flex-direction:column; gap:8px;}
+
+.contact-band{display:flex; justify-content:space-between; align-items:center; gap:40px; flex-wrap:wrap;}
+.contact-band h2{font-size:clamp(30px,4.4vw,54px); max-width:14ch;}
+.contact-card{background:var(--road); color:var(--cream); border-radius:26px; padding:32px 30px; max-width:360px;}
+.contact-card .who{font-family:'Overpass Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--ochre); margin-bottom:10px;}
+.contact-card p{font-size:15px; margin-bottom:16px; opacity:.9;}
+.contact-card a.cta{font-family:'Fraunces'; font-style:italic; font-size:20px; color:var(--cream); border-bottom:2px solid var(--ochre);}
+
+footer{position:relative; z-index:2; padding:60px 6vw; text-align:center; font-family:'Overpass Mono',monospace; font-size:11px; letter-spacing:.08em; color:#8a8571; text-transform:uppercase;}
+
+@media(max-width:860px){
+  .price-grid{grid-template-columns:1fr;}
+  .contact-band{flex-direction:column; align-items:flex-start;}
+  section{padding:100px 6vw;}
+}
+</style>
+</head>
+<body class="locked">
+
+<div class="concept-tag">Concept C2 — Onderweg</div>
+<div class="cur" id="cur"><i></i><i></i><i></i><i></i><b></b></div>
+
+<div id="pre">
+  <div class="row"><div class="ct" id="ct">000</div><div class="lbl">wordt geladen</div></div>
+  <div class="track"><div class="bar" id="pbar"></div></div>
+</div>
+
+<nav><div class="word">de Palm</div><a class="cta-mini" href="#prijzen">Boek nu</a></nav>
+
+<section class="hero" id="hero">
+  <div class="marquee"><span>PROEFLES · LESPAKKET · PRAKTIJKEXAMEN · RIJBEWIJS · &nbsp;PROEFLES · LESPAKKET · PRAKTIJKEXAMEN · RIJBEWIJS · &nbsp;</span></div>
+  <div class="hh"><h1>
+    <span class="ln"><i>Stap in.</i></span>
+    <span class="ln"><i><span class="accent">Rij vandaag</span> nog los.</i></span>
+  </h1></div>
+  <p class="lede">Rijlessen die net zo lekker soepel voelen als de rit zelf — persoonlijk, zonder gedoe, met een instructeur die met je meedenkt.</p>
+  <a class="btn" href="#prijzen">Boek een proefles →</a>
+  <div class="road-scene">
+    <div class="note">Concept-plaatsvervanger — scroll-scrub video volgt na akkoord</div>
+    <div class="strip"></div>
+    <div class="car" id="car">
+      <svg viewBox="0 0 200 90"><ellipse cx="100" cy="80" rx="86" ry="6" fill="#22201C" opacity=".18"/>
+      <path d="M18 58 Q26 26 60 24 L84 24 Q94 8 120 8 L146 8 Q162 8 168 26 L182 28 Q192 32 192 48 L192 58 Z" fill="#B25438"/>
+      <rect x="72" y="14" width="72" height="20" rx="6" fill="#F2E9D8" opacity=".85"/>
+      <circle cx="58" cy="60" r="17" fill="#22201C"/><circle cx="58" cy="60" r="7" fill="#D9922B"/>
+      <circle cx="152" cy="60" r="17" fill="#22201C"/><circle cx="152" cy="60" r="7" fill="#D9922B"/></svg>
+    </div>
+  </div>
+</section>
+
+<section class="physics-section" id="spelen">
+  <div class="section-head">
+    <div class="eyebrow">Speel ermee</div>
+    <h2>Sleep je route bij elkaar.</h2>
+    <p class="physics-hint">Sleep de vier stappen — ze botsen, veren terug, en zakken samen tot je eigen volgorde. (Precies de "speels, met bounce"-motion uit de brief, hier letterlijk met natuurkunde.)</p>
+  </div>
+  <div id="physicsBox"></div>
+</section>
+
+<div class="pin-wrap" id="pinWrap">
+  <div class="pin-inner">
+    <div class="pin-label">Hoe het werkt</div>
+    <div class="pin-track" id="pinTrack">
+      <div class="pin-card"><div class="num">01</div><h3>Proefles boeken</h3><p>Eén rit, vrijblijvend — je voelt binnen 10 minuten of het klikt.</p></div>
+      <div class="pin-card"><div class="num">02</div><h3>Lespakket volgen</h3><p>In jouw tempo, met een vaste instructeur die met je meedenkt.</p></div>
+      <div class="pin-card"><div class="num">03</div><h3>Praktijkexamen</h3><p>Pas gepland als jij je er klaar voor voelt — niet eerder.</p></div>
+      <div class="pin-card"><div class="num">04</div><h3>Rijbewijs op zak</h3><p>En dan rijd je gewoon door. Zelfstandig, zonder ons.</p></div>
+    </div>
+    <div class="pin-progress"><div class="fill" id="pinFill"></div></div>
+  </div>
+</div>
+
+<section id="prijzen">
+  <div class="eyebrow" style="margin-bottom:12px;">Prijzen</div>
+  <h2 style="font-size:clamp(32px,4.4vw,52px); margin-bottom:50px;">Kies je tempo.</h2>
+  <div class="price-grid" id="priceGrid">
+    <div class="price-card"><div class="price-inner"><div class="tag">Losse rit</div><h3>Proefles</h3><div class="amount">€39</div><ul><li>60 minuten</li><li>Zelfde week inplannen</li></ul></div></div>
+    <div class="price-card"><div class="price-inner"><div class="tag">Meest gekozen</div><h3>Lespakket 20</h3><div class="amount">€899</div><ul><li>20 lessen</li><li>Vaste instructeur</li></ul></div></div>
+    <div class="price-card"><div class="price-inner"><div class="tag">Compleet</div><h3>Pakket + examen</h3><div class="amount">€1.290</div><ul><li>30 lessen</li><li>Examen inbegrepen</li></ul></div></div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="contact-band">
+    <h2>Nog even zenuwachtig? Volkomen normaal.</h2>
+    <div class="contact-card"><div class="who">Instructeur</div><p>Stuur gerust vooraf een appje — ik neem écht de tijd voor je eerste les.</p><a class="cta" href="#">App direct →</a></div>
+  </div>
+</section>
+
+<footer>Verkeersschool de Palm · Geleen — concept-schets, geen definitieve content</footer>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- preloader ---------- */
+(function pre(){
+  var el=document.getElementById('pre'), ct=document.getElementById('ct'), bar=document.getElementById('pbar'), v=0, done=false, iv;
+  iv=setInterval(function(){
+    v+=Math.random()*15+7; if(v>=100){v=100; clearInterval(iv); setTimeout(open,200);}
+    ct.textContent=String(Math.floor(v)).padStart(3,'0'); bar.style.width=v+'%';
+  },75);
+  function open(){
+    if(done) return; done=true;
+    el.classList.add('go');
+    document.body.classList.remove('locked');
+    document.getElementById('hero').classList.add('ready');
+    var lines=document.querySelectorAll('.hh .ln i');
+    lines.forEach(function(n,k){
+      n.style.transition='transform 1.05s cubic-bezier(.34,1.56,.52,1) '+(0.1+k*0.1)+'s';
+      requestAnimationFrame(function(){ n.style.transform='translateY(0) rotate(0deg)'; });
+    });
+    setTimeout(function(){ el.style.display='none'; },1300);
+  }
+  setTimeout(function(){ if(!done){ clearInterval(iv); v=100; ct.textContent='100'; bar.style.width='100%'; open(); } },3200);
+})();
+
+/* ---------- magnetic crosshair cursor ---------- */
+(function cursor(){
+  if(matchMedia('(pointer:coarse)').matches) return;
+  var cur=document.getElementById('cur'); var cx=0,cy=0,tx=0,ty=0;
+  addEventListener('mousemove',function(e){tx=e.clientX; ty=e.clientY;});
+  function loop(){cx+=(tx-cx)*.22; cy+=(ty-cy)*.22; cur.style.transform='translate('+cx+'px,'+cy+'px)'; requestAnimationFrame(loop);}
+  loop();
+  document.querySelectorAll('a,button').forEach(function(el){
+    el.addEventListener('mouseenter',function(){cur.classList.add('on');});
+    el.addEventListener('mouseleave',function(){cur.classList.remove('on');});
+  });
+})();
+
+/* ---------- nav background on scroll ---------- */
+(function navBg(){
+  var nav=document.querySelector('nav');
+  function update(){ nav.classList.toggle('scrolled', window.scrollY > 60); }
+  addEventListener('scroll', update, {passive:true}); update();
+})();
+
+/* ---------- hero scroll-scrub car placeholder ---------- */
+var car=document.getElementById('car'), scene=document.querySelector('.road-scene');
+function updateCar(){
+  var rect=scene.getBoundingClientRect(), vh=window.innerHeight;
+  var progress=1-(rect.top+rect.height*.5)/vh;
+  progress=Math.max(0,Math.min(1,progress));
+  car.style.left=(-30+progress*140)+'%';
+}
+addEventListener('scroll',updateCar,{passive:true}); addEventListener('resize',updateCar); updateCar();
+
+/* ---------- MATTER.JS: draggable, bouncing route chips ---------- */
+(function physics(){
+  var Engine=Matter.Engine, Render=Matter.Render, Runner=Matter.Runner, Bodies=Matter.Bodies,
+      Composite=Matter.Composite, Mouse=Matter.Mouse, MouseConstraint=Matter.MouseConstraint, Body=Matter.Body;
+
+  var container=document.getElementById('physicsBox');
+  var w=container.clientWidth, h=container.clientHeight;
+
+  var engine=Engine.create();
+  engine.gravity.y=0.9;
+
+  var render=Render.create({
+    element:container, engine:engine,
+    options:{ width:w, height:h, background:'transparent', wireframes:false, pixelRatio:window.devicePixelRatio||1 }
+  });
+
+  var wallOpts={ isStatic:true, render:{visible:false} };
+  var ground=Bodies.rectangle(w/2, h+20, w*2, 40, wallOpts);
+  var ceil=Bodies.rectangle(w/2, -20, w*2, 40, wallOpts);
+  var left=Bodies.rectangle(-20, h/2, 40, h*2, wallOpts);
+  var right=Bodies.rectangle(w+20, h/2, 40, h*2, wallOpts);
+
+  var labels=[
+    {t:'Proefles', c:'#B25438'}, {t:'Lespakket', c:'#D9922B'}, {t:'Examen', c:'#4B5A3D'}, {t:'Rijbewijs', c:'#22201C'}
+  ];
+  var chips=labels.map(function(l,i){
+    var body=Bodies.circle(w*0.25 + i*(w*0.18), 60+i*40, 66, {
+      restitution:0.72, friction:0.15, frictionAir:0.012,
+      render:{ fillStyle:l.c, strokeStyle:'rgba(0,0,0,0.08)', lineWidth:2 }
+    });
+    body.plugin = {label:l.t};
+    return body;
+  });
+
+  Composite.add(engine.world, [ground, ceil, left, right].concat(chips));
+
+  var mouse=Mouse.create(render.canvas);
+  var mouseConstraint=MouseConstraint.create(engine, {
+    mouse:mouse,
+    constraint:{ stiffness:0.18, damping:0.15, render:{visible:false} }
+  });
+  Composite.add(engine.world, mouseConstraint);
+  render.mouse=mouse;
+
+  Render.run(render);
+  var runner=Runner.create();
+  Runner.run(runner, engine);
+
+  // draw labels on top of the circles each frame
+  Matter.Events.on(render, 'afterRender', function(){
+    var ctx=render.context;
+    ctx.font='600 14px Karla, sans-serif';
+    ctx.fillStyle='#FBF6EA';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    chips.forEach(function(b){
+      ctx.save();
+      ctx.translate(b.position.x, b.position.y);
+      ctx.rotate(b.angle);
+      ctx.fillText(b.plugin.label, 0, 0);
+      ctx.restore();
+    });
+  });
+
+  // pause simulation off-screen for perf
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ Runner.run(runner, engine); }
+      else { Runner.stop(runner); }
+    });
+  },{threshold:0});
+  io.observe(container);
+
+  function resize(){
+    w=container.clientWidth; h=container.clientHeight;
+    render.canvas.width=w; render.canvas.height=h;
+    render.options.width=w; render.options.height=h;
+    Body.setPosition(ground,{x:w/2,y:h+20}); Body.setPosition(right,{x:w+20,y:h/2});
+  }
+  addEventListener('resize', resize);
+})();
+
+/* ---------- GSAP ScrollTrigger real pinned horizontal track ---------- */
+(function pinnedSteps(){
+  var track=document.getElementById('pinTrack'), fill=document.getElementById('pinFill');
+  function getMax(){ return track.scrollWidth - (window.innerWidth*0.86); }
+  ScrollTrigger.create({
+    trigger:'#pinWrap', start:'top top', end:'bottom bottom', scrub:.5,
+    onUpdate:function(self){
+      var max=Math.max(getMax(),0);
+      gsap.set(track,{x:-self.progress*max});
+      fill.style.width=(self.progress*100)+'%';
+    }
+  });
+  document.querySelectorAll('.pin-card').forEach(function(c){
+    c.addEventListener('mousemove',function(e){
+      var r=c.getBoundingClientRect();
+      var ang=Math.atan2(e.clientY-(r.top+r.height/2), e.clientX-(r.left+r.width/2))*180/Math.PI+90;
+      c.style.setProperty('--a', ang.toFixed(1)+'deg');
+    });
+  });
+})();
+
+/* ---------- price card reveal + edge glow ---------- */
+var io=new IntersectionObserver(function(entries){ entries.forEach(function(e){ if(e.isIntersecting) e.target.classList.add('in'); }); },{threshold:.25});
+document.querySelectorAll('.price-card').forEach(function(el){ io.observe(el);
+  el.addEventListener('mousemove',function(e){
+    var r=el.getBoundingClientRect();
+    var ang=Math.atan2(e.clientY-(r.top+r.height/2), e.clientX-(r.left+r.width/2))*180/Math.PI+90;
+    el.style.setProperty('--a', ang.toFixed(1)+'deg');
+  });
+});
+</script>
+</body>
+</html>
