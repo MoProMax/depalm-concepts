@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verkeersschool de Palm — Concept A2: Baken</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Karla:wght@400;500;700&family=Overpass+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bark:#241F1A; --olive:#3E4634; --linen:#EFE7D6; --ochre:#C4881F; --sage:#93A183;
+  --ink:#2B241D; --cream:#FBF7ED; --glow:#E7A84A;
+  --e-out:cubic-bezier(.16,1,.3,1); --e-inout:cubic-bezier(.77,0,.175,1); --e-over:cubic-bezier(.2,1.4,.4,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bark)}
+body{background:var(--linen); color:var(--ink); font-family:'Karla',sans-serif; font-size:17px; line-height:1.6; overflow-x:hidden;}
+body.locked{overflow:hidden; height:100vh;}
+a{color:inherit; text-decoration:none;}
+h1,h2,h3{font-family:'Instrument Serif',serif; font-weight:400; letter-spacing:-.01em;}
+.eyebrow{font-family:'Overpass Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--olive);}
+.concept-tag{position:fixed; top:16px; right:16px; z-index:120; background:var(--bark); color:var(--linen); font-family:'Overpass Mono',monospace; font-size:11px; letter-spacing:.08em; padding:8px 14px; border-radius:999px; text-transform:uppercase;}
+section{position:relative; z-index:2; padding:130px 8vw;}
+
+/* ---- raw WebGL shader background ---- */
+#gl{position:fixed; inset:0; z-index:0; width:100%; height:100%;}
+.gl-fade{position:fixed; inset:0; z-index:1; pointer-events:none; background:linear-gradient(180deg, rgba(36,31,26,.15) 0%, transparent 22%, var(--linen) 62%);}
+
+/* ---- custom magnetic cursor ---- */
+@media(pointer:fine){
+  body,a,button{cursor:none;}
+  .cur{position:fixed; top:0; left:0; z-index:150; pointer-events:none; width:44px; height:44px; margin:-22px 0 0 -22px;}
+  .cur i{position:absolute; background:var(--bark); opacity:.7; transition:all .4s var(--e-out);}
+  .cur i:nth-child(1){left:50%; top:0; width:1px; height:12px; transform:translateX(-50%);}
+  .cur i:nth-child(2){left:50%; bottom:0; width:1px; height:12px; transform:translateX(-50%);}
+  .cur i:nth-child(3){top:50%; left:0; height:1px; width:12px; transform:translateY(-50%);}
+  .cur i:nth-child(4){top:50%; right:0; height:1px; width:12px; transform:translateY(-50%);}
+  .cur b{position:absolute; left:50%; top:50%; width:4px; height:4px; margin:-2px 0 0 -2px; border-radius:50%; background:var(--ochre); box-shadow:0 0 10px var(--ochre); transition:all .4s var(--e-out);}
+  .cur.on i{background:var(--ochre); opacity:1;}
+  .cur.on i:nth-child(1),.cur.on i:nth-child(2){height:6px;}
+  .cur.on i:nth-child(3),.cur.on i:nth-child(4){width:6px;}
+  .cur.on b{width:30px; height:30px; margin:-15px 0 0 -15px; opacity:.12; box-shadow:none;}
+}
+
+/* ---- preloader / curtain ---- */
+#pre{position:fixed; inset:0; z-index:200; background:var(--bark); display:flex; flex-direction:column; justify-content:flex-end; padding:48px 8vw; transition:transform .8s var(--e-inout);}
+#pre .row{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px;}
+#pre .ct{font-family:'Instrument Serif'; font-style:italic; font-size:76px; color:var(--linen); line-height:1;}
+#pre .lbl{font-family:'Overpass Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--sage);}
+#pre .track{height:2px; background:rgba(239,231,214,.18); border-radius:2px; overflow:hidden;}
+#pre .bar{height:100%; width:0%; background:var(--ochre);}
+#curtain{position:fixed; left:0; right:0; bottom:0; height:100vh; background:var(--olive); z-index:199;}
+#pre.go{transform:translateY(-100%);}
+
+/* ---- nav / kilometerpaaltje ---- */
+.marker{position:fixed; left:28px; bottom:28px; z-index:60; display:flex; align-items:center; gap:10px; background:var(--bark); color:var(--linen); padding:12px 18px 12px 14px; border-radius:0 999px 999px 0/0 60% 60% 0; box-shadow:0 8px 24px rgba(36,31,26,.35); transition:transform .3s var(--e-over);}
+.marker:hover{transform:translateX(4px) rotate(-1deg);}
+.marker .dot{width:8px;height:8px;border-radius:50%;background:var(--ochre);}
+.marker span{font-family:'Overpass Mono',monospace; font-size:12px; letter-spacing:.08em;}
+.marker-menu{position:fixed; left:28px; bottom:82px; z-index:59; background:var(--cream); border-radius:16px; padding:10px; display:none; flex-direction:column; gap:2px; box-shadow:0 20px 40px rgba(36,31,26,.18);}
+.marker-menu.open{display:flex;}
+.marker-menu a{position:relative; font-family:'Overpass Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--bark); padding:9px 14px; border-radius:10px; overflow:hidden;}
+.marker-menu a::after{content:""; position:absolute; left:-30%; top:0; bottom:0; width:30%; background:linear-gradient(90deg,transparent,rgba(196,136,31,.35),transparent); transform:translateX(0); opacity:0; transition:opacity .2s;}
+.marker-menu a:hover::after{opacity:1; animation:streamline 1.1s linear infinite;}
+.marker-menu a:hover{background:var(--linen);}
+@keyframes streamline{ to{ transform:translateX(430%); } }
+
+/* ---- hero ---- */
+.hero{min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding-top:80px;}
+.hero-top{display:flex; justify-content:space-between; margin-bottom:40px;}
+.wordmark{font-family:'Instrument Serif'; font-style:italic; font-size:22px;}
+.hero-grid{display:grid; grid-template-columns:1.1fr .9fr; gap:60px; align-items:center;}
+.hh{overflow:hidden;}
+.hh .ln{overflow:hidden; display:block;}
+.hh .ln i{display:block; font-style:normal; transform:translateY(115%); will-change:transform;}
+.hero h1{font-size:clamp(48px,6.2vw,88px); line-height:1.0; margin-bottom:28px;}
+.hero h1 em{font-style:italic; color:var(--ochre);}
+.hero p.lede{font-size:19px; max-width:46ch; color:#4a4137; margin-bottom:36px; opacity:0; transform:translateY(14px); transition:all .8s var(--e-out) .5s;}
+.hero.ready p.lede{opacity:1; transform:none;}
+.btn{position:relative; display:inline-flex; align-items:center; gap:10px; background:var(--ochre); color:var(--cream); font-family:'Karla'; font-weight:700; padding:16px 28px; border-radius:999px; border:none; font-size:15px; transition:transform .3s var(--e-over), box-shadow .3s var(--e-over); overflow:hidden;}
+.btn .fill{position:absolute; inset:0; background:var(--bark); transform:scaleX(0); transform-origin:left; transition:transform .35s var(--e-inout); z-index:0;}
+.btn:hover .fill{transform:scaleX(1);}
+.btn span{position:relative; z-index:1;}
+.btn.ghost{background:transparent; border:1.5px solid var(--bark); color:var(--bark);}
+
+.scrub-stage{position:relative; aspect-ratio:4/5; border-radius:62% 38% 55% 45%/50% 45% 55% 50%; background:linear-gradient(160deg,#d8ceb2,#e4d9c2); overflow:hidden; transform:rotate(1.1deg); box-shadow:0 30px 60px rgba(36,31,26,.25);}
+.scrub-stage .road{position:absolute; bottom:14%; left:0; right:0; height:3px; background:repeating-linear-gradient(90deg,var(--bark) 0 24px,transparent 24px 44px); opacity:.35;}
+.scrub-stage .car{position:absolute; bottom:16%; right:-40%; width:34%;}
+.scrub-stage .car svg{width:100%; filter:drop-shadow(0 10px 14px rgba(0,0,0,.25));}
+.scrub-note{position:absolute; top:16px; left:16px; background:rgba(36,31,26,.82); color:var(--linen); font-family:'Overpass Mono',monospace; font-size:10px; letter-spacing:.06em; padding:7px 11px; border-radius:8px; max-width:70%;}
+
+/* ---- doorsnede card (In de auto) ---- */
+.cutaway-wrap{display:grid; grid-template-columns:.9fr 1.1fr; gap:60px; align-items:center;}
+.cutaway{position:relative; aspect-ratio:4/3; border-radius:24px; overflow:hidden; background:#dfd4b7; box-shadow:0 24px 50px rgba(36,31,26,.18);}
+.cutaway .layer{position:absolute; inset:0;}
+.cutaway .seam{position:absolute; top:0; bottom:0; width:2px; background:var(--ochre); left:50%; box-shadow:0 0 12px rgba(196,136,31,.6); pointer-events:none;}
+.cutaway .hint{position:absolute; bottom:14px; left:14px; font-family:'Overpass Mono',monospace; font-size:10px; letter-spacing:.06em; color:var(--bark); background:rgba(251,247,237,.75); padding:6px 10px; border-radius:8px;}
+.cutaway-copy h2{font-size:clamp(30px,3.6vw,44px); margin-bottom:18px;}
+.cutaway-copy p{color:#4a4137; max-width:44ch; margin-bottom:14px;}
+
+/* ---- reveal wrapper ---- */
+.reveal{opacity:0; transform:translateY(24px); transition:opacity .8s var(--e-out), transform .8s var(--e-out);}
+.reveal.in{opacity:1; transform:none;}
+
+/* ---- odometer steps (kept, refined) ---- */
+.section-head{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:56px; gap:24px; flex-wrap:wrap;}
+.section-head h2{font-size:clamp(32px,4vw,52px);}
+.odometer-wrap{display:grid; grid-template-columns:.6fr 1.4fr; gap:60px; align-items:start;}
+.odometer{background:var(--bark); border-radius:20px; padding:26px 22px; display:flex; gap:6px; box-shadow:inset 0 2px 8px rgba(0,0,0,.4); width:fit-content;}
+.odometer .digit{width:52px; height:72px; background:var(--ink); border-radius:6px; overflow:hidden; position:relative;}
+.odometer .digit .strip{position:absolute; left:0; top:0; width:100%; display:flex; flex-direction:column; transition:transform .5s var(--e-over);}
+.odometer .digit .strip span{height:72px; display:flex; align-items:center; justify-content:center; font-family:'Overpass Mono',monospace; font-size:38px; color:var(--ochre); font-weight:600;}
+.steps{display:flex; flex-direction:column; gap:2px;}
+.step{padding:26px 0; border-top:1px solid rgba(36,31,26,.14); opacity:.35; transition:opacity .4s;}
+.step.active{opacity:1;}
+.step h3{font-size:26px; margin-bottom:6px;}
+.step p{color:#4a4137; max-width:52ch;}
+
+/* ---- price cards: randgloed (edge-glow follows cursor) ---- */
+.price-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:24px;}
+.price-card{
+  position:relative; background:var(--cream); border-radius:22px; padding:2px; overflow:hidden;
+  transform:rotate(var(--r,0deg)); transition:transform .35s var(--e-over);
+  --a:0deg;
+}
+.price-card::before{
+  content:""; position:absolute; inset:-40%; background:conic-gradient(from var(--a), transparent 0 78%, var(--glow) 88%, transparent 96%);
+  opacity:0; transition:opacity .3s;
+}
+.price-card:hover::before{opacity:1;}
+.price-card:nth-child(1){--r:-1.4deg;}
+.price-card:nth-child(2){--r:.8deg;}
+.price-card:nth-child(3){--r:-.6deg;}
+.price-card:hover{transform:rotate(0deg) translateY(-6px);}
+.price-inner{position:relative; z-index:1; background:var(--cream); border-radius:20px; padding:32px 26px; height:100%;}
+.price-card .tag{font-family:'Overpass Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--sage);}
+.price-card h3{font-size:30px; margin:10px 0 4px;}
+.price-card .amount{font-family:'Instrument Serif'; font-style:italic; font-size:40px; color:var(--ochre); margin-bottom:16px;}
+.price-card ul{list-style:none; display:flex; flex-direction:column; gap:8px; font-size:14.5px; color:#4a4137;}
+.price-card ul li::before{content:"— "; color:var(--sage);}
+
+/* ---- contact note ---- */
+.note-band{display:grid; grid-template-columns:1fr .55fr; gap:40px; align-items:center;}
+.note{background:#F6E9A8; padding:30px 28px 34px; border-radius:2px 14px 14px 2px; transform:rotate(-2.5deg); box-shadow:0 18px 34px rgba(36,31,26,.18); position:relative;}
+.note .who{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
+.note .avatar{width:46px; height:46px; border-radius:50%; background:var(--olive); display:flex; align-items:center; justify-content:center; color:var(--linen); font-family:'Instrument Serif'; font-style:italic; font-size:20px;}
+.note .who b{font-family:'Instrument Serif'; font-style:italic; font-size:20px;}
+.note p{font-size:16px; color:var(--bark);}
+
+footer{position:relative; z-index:2; padding:60px 8vw; text-align:center; font-family:'Overpass Mono',monospace; font-size:11px; letter-spacing:.08em; color:#8a8072; text-transform:uppercase;}
+
+@media(max-width:860px){
+  .hero-grid,.odometer-wrap,.note-band,.cutaway-wrap{grid-template-columns:1fr;}
+  .price-grid{grid-template-columns:1fr;}
+  section{padding:90px 6vw;}
+}
+</style>
+</head>
+<body class="locked">
+
+<div class="concept-tag">Concept A2 — Baken</div>
+<canvas id="gl"></canvas>
+<div class="gl-fade"></div>
+<div class="cur" id="cur"><i></i><i></i><i></i><i></i><b></b></div>
+
+<div id="pre">
+  <div class="row"><div class="ct" id="ct">000</div><div class="lbl">wordt geladen</div></div>
+  <div class="track"><div class="bar" id="pbar"></div></div>
+</div>
+<div id="curtain"></div>
+
+<div class="marker" id="markerBtn"><span class="dot"></span><span id="markerLabel">Hero</span></div>
+<div class="marker-menu" id="markerMenu">
+  <a href="#hero">Hero</a><a href="#auto">In de auto</a><a href="#werkt">Hoe het werkt</a><a href="#prijzen">Prijzen</a><a href="#contact">Contact</a>
+</div>
+
+<section class="hero" id="hero">
+  <div class="hero-top"><div class="wordmark">de Palm</div></div>
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow">Rijschool · Geleen</div>
+      <div class="hh">
+        <h1>
+          <span class="ln"><i>Leren rijden</i></span>
+          <span class="ln"><i>voelt hier <em>vertrouwd</em>.</i></span>
+        </h1>
+      </div>
+      <p class="lede">Persoonlijke rijlessen van een instructeur die de tijd voor je neemt — geen haast, wel resultaat. Boek vandaag nog je proefles.</p>
+      <div style="display:flex; gap:14px; flex-wrap:wrap;">
+        <a class="btn" href="#prijzen"><span class="fill"></span><span>Boek een proefles</span></a>
+        <a class="btn ghost" href="#werkt"><span>Hoe het werkt</span></a>
+      </div>
+    </div>
+    <div class="scrub-stage" id="scrubStage">
+      <div class="scrub-note">Concept-plaatsvervanger — scroll-scrub video volgt na akkoord</div>
+      <div class="road"></div>
+      <div class="car" id="car">
+        <svg viewBox="0 0 200 90" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="100" cy="78" rx="82" ry="6" fill="#241F1A" opacity=".18"/>
+          <path d="M20 60 Q28 30 60 28 L82 28 Q92 12 118 12 L142 12 Q158 12 164 28 L178 30 Q188 34 188 50 L188 60 Z" fill="#3E4634"/>
+          <rect x="70" y="18" width="70" height="20" rx="6" fill="#93A183" opacity=".7"/>
+          <circle cx="60" cy="62" r="16" fill="#241F1A"/><circle cx="60" cy="62" r="7" fill="#C4881F"/>
+          <circle cx="150" cy="62" r="16" fill="#241F1A"/><circle cx="150" cy="62" r="7" fill="#C4881F"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="auto">
+  <div class="cutaway-wrap reveal">
+    <div class="cutaway" id="cutaway">
+      <div class="layer" id="layerOutside"></div>
+      <div class="layer" id="layerInside" style="clip-path:inset(0 100% 0 0);"></div>
+      <div class="seam" id="seam"></div>
+      <div class="hint">beweeg over de auto — doorsnede</div>
+    </div>
+    <div class="cutaway-copy">
+      <div class="eyebrow">In de lesauto</div>
+      <h2>Precies zo vertrouwd<br>vanbinnen als vanbuiten.</h2>
+      <p>Dubbele bediening, duidelijk zicht op elk spiegeltje, en een instructeur die meekijkt zonder over je schouder te hangen. Beweeg over de auto om te zien wat erbij komt kijken.</p>
+    </div>
+  </div>
+</section>
+
+<section id="werkt">
+  <div class="section-head reveal"><div><div class="eyebrow">Route naar je rijbewijs</div><h2>Vier stops, één bestemming.</h2></div></div>
+  <div class="odometer-wrap reveal">
+    <div class="odometer"><div class="digit"><div class="strip" id="digitStrip"><span>0</span><span>1</span><span>2</span><span>3</span></div></div></div>
+    <div class="steps" id="steps">
+      <div class="step active" data-i="0"><div class="eyebrow">Punt 00</div><h3>Proefles boeken</h3><p>Eén rit, vrijblijvend — je voelt meteen of het klikt.</p></div>
+      <div class="step" data-i="1"><div class="eyebrow">Punt 01</div><h3>Lespakket volgen</h3><p>In jouw tempo, met een vast aanspreekpunt de hele weg.</p></div>
+      <div class="step" data-i="2"><div class="eyebrow">Punt 02</div><h3>Praktijkexamen</h3><p>We plannen 'm pas als jij er klaar voor bent, niet eerder.</p></div>
+      <div class="step" data-i="3"><div class="eyebrow">Punt 03</div><h3>Rijbewijs op zak</h3><p>En dan? Dan rijd je gewoon zelf verder.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="prijzen">
+  <div class="section-head reveal"><div><div class="eyebrow">Prijzen</div><h2>Kies je pakket.</h2></div></div>
+  <div class="price-grid reveal">
+    <div class="price-card"><div class="price-inner"><div class="tag">Losse rit</div><h3>Proefles</h3><div class="amount">€39</div><ul><li>60 minuten</li><li>Vrijblijvend kennismaken</li><li>Zelfde week nog inplannen</li></ul></div></div>
+    <div class="price-card"><div class="price-inner"><div class="tag">Meest gekozen</div><h3>Lespakket 20</h3><div class="amount">€899</div><ul><li>20 lessen × 60 min</li><li>Vaste instructeur</li><li>Tussentijdse voortgangscheck</li></ul></div></div>
+    <div class="price-card"><div class="price-inner"><div class="tag">Compleet</div><h3>Pakket + examen</h3><div class="amount">€1.290</div><ul><li>30 lessen × 60 min</li><li>Examenaanvraag inbegrepen</li><li>Extra les vlak vóór examen</li></ul></div></div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="note-band reveal">
+    <div><div class="eyebrow">Nog twijfels?</div><h2>Dat hoort erbij.</h2></div>
+    <div class="note">
+      <div class="who"><div class="avatar">R</div><b>Instructeur</b></div>
+      <p>Zenuwachtig voor je eerste les? Bijna iedereen is dat — ik neem gewoon de tijd. Bel of app gerust vooraf.</p>
+    </div>
+  </div>
+</section>
+
+<footer>Verkeersschool de Palm · Geleen — concept-schets, geen definitieve content</footer>
+
+<script>
+(function(){
+'use strict';
+var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- 1. RAW WEBGL SHADER BACKGROUND ---------- */
+(function gl(){
+  var cv = document.getElementById('gl');
+  var g = cv.getContext('webgl', {antialias:false, alpha:false});
+  if(!g){ cv.style.background = 'linear-gradient(180deg,#3a2d1c,#241F1A)'; return; }
+  var vs = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
+  var fs = [
+  'precision highp float;',
+  'uniform vec2 uRes; uniform float uTime; uniform float uProg;',
+  'float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
+  'float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);',
+  ' return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}',
+  'float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<4;i++){v+=a*noise(p);p*=2.02;a*=.5;}return v;}',
+  'void main(){',
+  ' vec2 p=(gl_FragCoord.xy-.5*uRes)/uRes.y;',
+  ' vec3 col=vec3(0.929,0.902,0.816);',
+  ' float road=smoothstep(0.02,0.0,abs(p.y+0.30+uProg*0.06));',
+  ' col=mix(col, vec3(0.87,0.83,0.73), road*0.45);',
+  ' for(int i=0;i<3;i++){',
+  '  float fi=float(i);',
+  '  float ph=uTime*(0.03+fi*0.01)+fi*4.0;',
+  '  float y=-0.1+fi*0.16-uProg*0.10;',
+  '  float n=fbm(vec2(p.x*0.9+ph, fi*5.0));',
+  '  float dist=abs(p.y-(y+(n-0.5)*0.3));',
+  '  float glow=exp(-dist*(18.0-fi*2.0));',
+  '  col-=vec3(0.16,0.30,0.22)*glow*(0.10+0.10*uProg);',
+  ' }',
+  ' col*=mix(0.95,1.0,smoothstep(1.1,0.1,length(p*vec2(0.8,1.0))));',
+  ' gl_FragColor=vec4(col,1.0);}'
+  ].join('\n');
+  function sh(t,src){var s=g.createShader(t); g.shaderSource(s,src); g.compileShader(s); return s;}
+  var pr=g.createProgram();
+  g.attachShader(pr,sh(g.VERTEX_SHADER,vs)); g.attachShader(pr,sh(g.FRAGMENT_SHADER,fs));
+  g.linkProgram(pr); g.useProgram(pr);
+  var buf=g.createBuffer(); g.bindBuffer(g.ARRAY_BUFFER,buf);
+  g.bufferData(g.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),g.STATIC_DRAW);
+  var la=g.getAttribLocation(pr,'a'); g.enableVertexAttribArray(la); g.vertexAttribPointer(la,2,g.FLOAT,false,0,0);
+  var uRes=g.getUniformLocation(pr,'uRes'), uTime=g.getUniformLocation(pr,'uTime'), uProg=g.getUniformLocation(pr,'uProg');
+  function size(){var r=Math.min(devicePixelRatio||1,1.6);
+    cv.width=innerWidth*r; cv.height=innerHeight*r; cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px';
+    g.viewport(0,0,cv.width,cv.height); g.uniform2f(uRes,cv.width,cv.height);}
+  addEventListener('resize',size); size();
+  var prog=0;
+  addEventListener('scroll',function(){
+    var h=document.documentElement;
+    prog = h.scrollTop/(h.scrollHeight-h.clientHeight||1);
+  },{passive:true});
+  function tick(t){ g.uniform1f(uTime,t*0.001); g.uniform1f(uProg,prog); g.drawArrays(g.TRIANGLES,0,3); requestAnimationFrame(tick); }
+  if(!RM) requestAnimationFrame(tick); else { g.uniform1f(uTime,0); g.uniform1f(uProg,0); g.drawArrays(g.TRIANGLES,0,3); }
+})();
+
+/* ---------- 2. MAGNETIC CURSOR ---------- */
+(function cursor(){
+  if(matchMedia('(pointer:coarse)').matches) return;
+  var cur=document.getElementById('cur'); var cx=0,cy=0,tx=0,ty=0;
+  addEventListener('mousemove',function(e){tx=e.clientX; ty=e.clientY;});
+  function loop(){ cx+=(tx-cx)*.25; cy+=(ty-cy)*.25; cur.style.transform='translate('+cx+'px,'+cy+'px)'; requestAnimationFrame(loop); }
+  loop();
+  document.querySelectorAll('a,button').forEach(function(el){
+    el.addEventListener('mouseenter',function(){cur.classList.add('on');});
+    el.addEventListener('mouseleave',function(){cur.classList.remove('on');});
+  });
+})();
+
+/* ---------- 3. PRELOADER / CURTAIN ---------- */
+(function pre(){
+  var el=document.getElementById('pre'), ct=document.getElementById('ct'), bar=document.getElementById('pbar'),
+      curtain=document.getElementById('curtain'), v=0, done=false, iv;
+  iv=setInterval(function(){
+    v+=Math.random()*14+6; if(v>=100){v=100; clearInterval(iv); setTimeout(open,220);}
+    ct.textContent=String(Math.floor(v)).padStart(3,'0'); bar.style.width=v+'%';
+  },80);
+  function open(){
+    if(done) return; done=true;
+    el.classList.add('go');
+    curtain.style.transition='transform .9s cubic-bezier(.77,0,.175,1)';
+    curtain.style.transform='translateY(-100%)';
+    document.body.classList.remove('locked');
+    document.getElementById('hero').classList.add('ready');
+    var lines=document.querySelectorAll('.hh .ln i');
+    lines.forEach(function(n,k){
+      n.style.transition='transform 1s cubic-bezier(.16,1,.3,1) '+(0.15+k*0.08)+'s';
+      requestAnimationFrame(function(){ n.style.transform='translateY(0)'; });
+    });
+    setTimeout(function(){ el.style.display='none'; curtain.style.display='none'; },1200);
+  }
+  setTimeout(function(){ if(!done){ clearInterval(iv); v=100; ct.textContent='100'; bar.style.width='100%'; open(); } },3500);
+})();
+
+/* ---------- 4. NAV MARKER ---------- */
+var markerBtn=document.getElementById('markerBtn'), markerMenu=document.getElementById('markerMenu');
+markerBtn.addEventListener('click',function(){markerMenu.classList.toggle('open');});
+var markerLabel=document.getElementById('markerLabel');
+var labels={hero:'Hero',auto:'In de auto',werkt:'Hoe het werkt',prijzen:'Prijzen',contact:'Contact'};
+
+/* ---------- 5. HERO CAR SCRUB PLACEHOLDER ---------- */
+var stage=document.getElementById('scrubStage'), car=document.getElementById('car');
+function updateCar(){
+  var rect=stage.getBoundingClientRect(), vh=window.innerHeight;
+  var progress=1-(rect.top+rect.height)/(vh+rect.height);
+  progress=Math.max(0,Math.min(1,progress));
+  car.style.right=(-40+progress*106)+'%';
+}
+
+/* ---------- 6. DOORSNEDE-WIPE: car cutaway ---------- */
+(function cutaway(){
+  var box=document.getElementById('cutaway'), inside=document.getElementById('layerInside'), seam=document.getElementById('seam');
+  var outsideSVG = '<svg viewBox="0 0 400 300" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">'+
+    '<rect width="400" height="300" fill="#DFD4B7"/>'+
+    '<rect x="60" y="60" width="280" height="180" rx="18" fill="#3E4634"/>'+
+    '<rect x="90" y="90" width="220" height="60" rx="8" fill="#93A183" opacity=".6"/>'+
+    '<circle cx="120" cy="210" r="26" fill="#241F1A"/><circle cx="280" cy="210" r="26" fill="#241F1A"/>'+
+    '<text x="200" y="270" text-anchor="middle" font-family="Overpass Mono, monospace" font-size="12" fill="#4a4137">buitenkant</text></svg>';
+  var insideSVG = '<svg viewBox="0 0 400 300" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">'+
+    '<rect width="400" height="300" fill="#F6EFDD"/>'+
+    '<g stroke="#241F1A" stroke-width="1.4" fill="none">'+
+    '<rect x="70" y="150" width="60" height="80" rx="6"/>'+
+    '<circle cx="100" cy="120" r="34"/>'+
+    '<rect x="150" y="170" width="18" height="50" rx="4"/><rect x="176" y="170" width="18" height="50" rx="4"/>'+
+    '<rect x="220" y="90" width="120" height="50" rx="6"/>'+
+    '</g>'+
+    '<g font-family="Overpass Mono, monospace" font-size="10" fill="#8a8072">'+
+    '<text x="70" y="145">stoel</text><text x="80" y="105">stuur</text><text x="150" y="165">pedalen</text>'+
+    '<text x="220" y="85">dashboard</text></g>'+
+    '<text x="200" y="270" text-anchor="middle" font-family="Overpass Mono, monospace" font-size="12" fill="#241F1A">doorsnede</text></svg>';
+  document.getElementById('layerOutside').innerHTML = outsideSVG;
+  inside.innerHTML = insideSVG;
+  function cl(v,a,b){a=a||0;b=b===undefined?1:b; return v<a?a:v>b?b:v;}
+  box.addEventListener('mousemove', function(e){
+    var r=box.getBoundingClientRect(), x=cl((e.clientX-r.left)/r.width)*100;
+    inside.style.clipPath='inset(0 '+(100-x)+'% 0 0)';
+    seam.style.left=x+'%';
+  });
+  box.addEventListener('mouseleave', function(){
+    inside.style.clipPath='inset(0 100% 0 0)'; seam.style.left='0%';
+  });
+})();
+
+/* ---------- 7. REVEAL + ODOMETER + NAV LABEL via IntersectionObserver ---------- */
+var io=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){
+      e.target.classList.add('in');
+      if(e.target.tagName==='SECTION') markerLabel.textContent = labels[e.target.id] || '';
+    }
+  });
+},{threshold:.25});
+document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+document.querySelectorAll('section[id]').forEach(function(el){io.observe(el);});
+
+var steps=document.querySelectorAll('.step'), digitStrip=document.getElementById('digitStrip');
+var stepIO=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){
+      steps.forEach(function(s){s.classList.remove('active');});
+      e.target.classList.add('active');
+      digitStrip.style.transform='translateY(-'+(e.target.dataset.i*72)+'px)';
+    }
+  });
+},{threshold:.6});
+steps.forEach(function(s){stepIO.observe(s);});
+
+/* price card edge-glow follows cursor angle */
+document.querySelectorAll('.price-card').forEach(function(c){
+  c.addEventListener('mousemove',function(e){
+    var r=c.getBoundingClientRect();
+    var ang=Math.atan2(e.clientY-(r.top+r.height/2), e.clientX-(r.left+r.width/2))*180/Math.PI+90;
+    c.style.setProperty('--a', ang.toFixed(1)+'deg');
+  });
+});
+
+addEventListener('scroll',updateCar,{passive:true});
+addEventListener('resize',updateCar);
+updateCar();
+})();
+</script>
+</body>
+</html>
