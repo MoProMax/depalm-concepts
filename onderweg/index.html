@@ -71,7 +71,7 @@ nav .cta-mini:hover{transform:scale(1.08) rotate(-2deg);}
 
 .road-scene{position:relative; height:34vh; min-height:220px; margin-top:70px; border-radius:24px; overflow:hidden; background:linear-gradient(180deg,#E4D8BC,var(--sky));}
 .road-scene .strip{position:absolute; bottom:22%; left:0; right:0; height:6px; background:repeating-linear-gradient(90deg,var(--road) 0 30px,transparent 30px 56px);}
-.road-scene .car{position:absolute; bottom:24%; left:-30%; width:180px;}
+.road-scene .car{position:absolute; bottom:24%; right:-30%; width:180px;}
 .road-scene .car svg{width:100%; filter:drop-shadow(0 12px 16px rgba(0,0,0,.28));}
 .road-scene .note{position:absolute; top:14px; left:18px; background:rgba(34,32,28,.85); color:var(--cream); font-family:'Overpass Mono',monospace; font-size:10px; letter-spacing:.06em; padding:7px 11px; border-radius:8px;}
 
@@ -149,11 +149,47 @@ footer{position:relative; z-index:2; padding:60px 6vw; text-align:center; font-f
     <div class="note">Concept-plaatsvervanger — scroll-scrub video volgt na akkoord</div>
     <div class="strip"></div>
     <div class="car" id="car">
-      <svg viewBox="0 0 200 90"><ellipse cx="100" cy="80" rx="86" ry="6" fill="#22201C" opacity=".18"/>
-      <path d="M18 58 Q26 26 60 24 L84 24 Q94 8 120 8 L146 8 Q162 8 168 26 L182 28 Q192 32 192 48 L192 58 Z" fill="#B25438"/>
-      <rect x="72" y="14" width="72" height="20" rx="6" fill="#F2E9D8" opacity=".85"/>
-      <circle cx="58" cy="60" r="17" fill="#22201C"/><circle cx="58" cy="60" r="7" fill="#D9922B"/>
-      <circle cx="152" cy="60" r="17" fill="#22201C"/><circle cx="152" cy="60" r="7" fill="#D9922B"/></svg>
+      <svg viewBox="0 0 240 100" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="118" cy="90" rx="98" ry="7" fill="#000000" opacity=".16"/>
+  <path d="M18 68
+           C14 58 20 50 32 48
+           L40 47
+           C44 34 58 22 78 20
+           L128 18
+           C146 18 160 24 170 34
+           L182 46
+           C198 47 210 50 216 58
+           C220 63 219 70 213 72
+           L206 72
+           C205 61 196 53 185 53
+           C174 53 165 61 164 72
+           L88 72
+           C87 61 78 53 67 53
+           C56 53 47 61 46 72
+           L28 72
+           C21 72 17 71 18 68 Z"
+        fill="#B25438" stroke="#22201C" stroke-width="1.4"/>
+  <path d="M46 47 L58 27 C63 23 70 20 78 20 L104 19 L104 47 Z"
+        fill="#F2E9D8" opacity=".85"/>
+  <path d="M108 19 L128 18 C142 18 154 23 163 32 L170 46 L108 47 Z"
+        fill="#F2E9D8" opacity=".85"/>
+  <line x1="104" y1="19" x2="104" y2="47" stroke="#22201C" stroke-width="1.2"/>
+  <path d="M40 53 L206 53" stroke="#22201C" stroke-width="1" opacity=".35"/>
+  <path d="M96 53 L96 72" stroke="#22201C" stroke-width="1" opacity=".3"/>
+  <path d="M150 53 L150 72" stroke="#22201C" stroke-width="1" opacity=".3"/>
+  <rect x="14" y="58" width="14" height="5" rx="2" fill="#D9922B"/>
+  <circle cx="67" cy="72" r="19" fill="#1a1a1a"/>
+  <circle cx="67" cy="72" r="19" fill="none" stroke="#000" stroke-width="1" opacity=".4"/>
+  <circle cx="67" cy="72" r="9" fill="#F2E9D8"/>
+  <circle cx="67" cy="72" r="3" fill="#1a1a1a"/>
+  <circle cx="185" cy="72" r="19" fill="#1a1a1a"/>
+  <circle cx="185" cy="72" r="19" fill="none" stroke="#000" stroke-width="1" opacity=".4"/>
+  <circle cx="185" cy="72" r="9" fill="#F2E9D8"/>
+  <circle cx="185" cy="72" r="3" fill="#1a1a1a"/>
+  <rect x="204" y="49" width="10" height="4" rx="2" fill="#D9922B" opacity=".9"/>
+  <path d="M18 68 C14 60 19 52 30 50" fill="none" stroke="#22201C" stroke-width="1" opacity=".3"/>
+  <ellipse cx="60" cy="30" rx="7" ry="4" fill="#ffffff" opacity=".18"/>
+</svg>
     </div>
   </div>
 </section>
@@ -162,7 +198,7 @@ footer{position:relative; z-index:2; padding:60px 6vw; text-align:center; font-f
   <div class="section-head">
     <div class="eyebrow">Speel ermee</div>
     <h2>Sleep je route bij elkaar.</h2>
-    <p class="physics-hint">Sleep de vier stappen — ze botsen, veren terug, en zakken samen tot je eigen volgorde. (Precies de "speels, met bounce"-motion uit de brief, hier letterlijk met natuurkunde.)</p>
+    <p class="physics-hint">Sleep de vier banden — ze botsen, veren terug, en rollen samen tot je eigen volgorde. (Precies de "speels, met bounce"-motion uit de brief, hier letterlijk met natuurkunde.)</p>
   </div>
   <div id="physicsBox"></div>
 </section>
@@ -251,7 +287,7 @@ function updateCar(){
   var rect=scene.getBoundingClientRect(), vh=window.innerHeight;
   var progress=1-(rect.top+rect.height*.5)/vh;
   progress=Math.max(0,Math.min(1,progress));
-  car.style.left=(-30+progress*140)+'%';
+  car.style.right=(-30+progress*140)+'%';
 }
 addEventListener('scroll',updateCar,{passive:true}); addEventListener('resize',updateCar); updateCar();
 
@@ -278,14 +314,14 @@ addEventListener('scroll',updateCar,{passive:true}); addEventListener('resize',u
   var right=Bodies.rectangle(w+20, h/2, 40, h*2, wallOpts);
 
   var labels=[
-    {t:'Proefles', c:'#B25438'}, {t:'Lespakket', c:'#D9922B'}, {t:'Examen', c:'#4B5A3D'}, {t:'Rijbewijs', c:'#22201C'}
+    {t:'Proefles', c:'#B25438'}, {t:'Lespakket', c:'#D9922B'}, {t:'Examen', c:'#4B5A3D'}, {t:'Rijbewijs', c:'#8a6a3a'}
   ];
   var chips=labels.map(function(l,i){
-    var body=Bodies.circle(w*0.25 + i*(w*0.18), 60+i*40, 66, {
-      restitution:0.72, friction:0.15, frictionAir:0.012,
-      render:{ fillStyle:l.c, strokeStyle:'rgba(0,0,0,0.08)', lineWidth:2 }
+    var body=Bodies.circle(w*0.25 + i*(w*0.18), 60+i*40, 62, {
+      restitution:0.68, friction:0.2, frictionAir:0.014,
+      render:{ fillStyle:'transparent', strokeStyle:'transparent', lineWidth:0 }
     });
-    body.plugin = {label:l.t};
+    body.plugin = {label:l.t, rim:l.c};
     return body;
   });
 
@@ -303,17 +339,58 @@ addEventListener('scroll',updateCar,{passive:true}); addEventListener('resize',u
   var runner=Runner.create();
   Runner.run(runner, engine);
 
-  // draw labels on top of the circles each frame
+  // draw each body as a real tire — tread, rim spokes, hub — rotating with the physics body
   Matter.Events.on(render, 'afterRender', function(){
     var ctx=render.context;
-    ctx.font='600 14px Karla, sans-serif';
-    ctx.fillStyle='#FBF6EA';
-    ctx.textAlign='center'; ctx.textBaseline='middle';
     chips.forEach(function(b){
+      var r=62, rim=b.plugin.rim;
       ctx.save();
       ctx.translate(b.position.x, b.position.y);
       ctx.rotate(b.angle);
-      ctx.fillText(b.plugin.label, 0, 0);
+
+      // tire (black rubber, tread blocks)
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fillStyle='#1c1c1c'; ctx.fill();
+      ctx.save();
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.clip();
+      ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=3;
+      for(var t=0;t<24;t++){
+        var a=(t/24)*Math.PI*2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a)*r*0.78, Math.sin(a)*r*0.78);
+        ctx.lineTo(Math.cos(a)*r*1.02, Math.sin(a)*r*1.02);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // sidewall ring
+      ctx.beginPath(); ctx.arc(0,0,r*0.74,0,Math.PI*2); ctx.strokeStyle='rgba(255,255,255,0.14)'; ctx.lineWidth=1.5; ctx.stroke();
+
+      // rim
+      ctx.beginPath(); ctx.arc(0,0,r*0.56,0,Math.PI*2); ctx.fillStyle=rim; ctx.fill();
+      ctx.beginPath(); ctx.arc(0,0,r*0.56,0,Math.PI*2); ctx.strokeStyle='rgba(0,0,0,0.25)'; ctx.lineWidth=1.5; ctx.stroke();
+
+      // spokes
+      ctx.strokeStyle='rgba(0,0,0,0.28)'; ctx.lineWidth=4; ctx.lineCap='round';
+      for(var s=0;s<5;s++){
+        var sa=(s/5)*Math.PI*2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(sa)*r*0.16, Math.sin(sa)*r*0.16);
+        ctx.lineTo(Math.cos(sa)*r*0.50, Math.sin(sa)*r*0.50);
+        ctx.stroke();
+      }
+
+      // hub cap
+      ctx.beginPath(); ctx.arc(0,0,r*0.18,0,Math.PI*2); ctx.fillStyle='#1c1c1c'; ctx.fill();
+      ctx.beginPath(); ctx.arc(0,0,r*0.08,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.fill();
+
+      ctx.restore();
+
+      // label stays upright (not rotated) just below the tire, so text is always readable
+      ctx.save();
+      ctx.font='600 13px Karla, sans-serif';
+      ctx.fillStyle='#22201C';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(b.plugin.label, b.position.x, b.position.y + r + 16);
       ctx.restore();
     });
   });
